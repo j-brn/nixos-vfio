@@ -6,7 +6,10 @@
 
   outputs = { self, nixpkgs, utils, ... } @ inputs:
     {
-      nixosModules.libvirtdHooks = import ./modules/libvirtd-hooks.nix;
+      nixosModules = {
+        libvirtdHooks = import ./modules/libvirtd-hooks.nix;
+        kvmfr = import ./modules/kvmfr.nix;
+      };
     }
     // utils.lib.eachDefaultSystem (
       system:
