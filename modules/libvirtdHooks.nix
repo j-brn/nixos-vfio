@@ -45,11 +45,11 @@ with lib; let
   hookPreparationScript =
     concatStringsSep "\n"
       ([ "rm -rf ${hookDir}" ]
-        ++ mkHookPreparationCommands "daemon" cfg.daemon
-        ++ mkHookPreparationCommands "qemu" cfg.qemu
-        ++ mkHookPreparationCommands "lxc" cfg.lxc
-        ++ mkHookPreparationCommands "libxl" cfg.libxl
-        ++ mkHookPreparationCommands "network" cfg.network);
+        ++ mkHookPreparationCommands "daemon" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.daemon)
+        ++ mkHookPreparationCommands "qemu" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.qemu)
+        ++ mkHookPreparationCommands "lxc" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.lxc)
+        ++ mkHookPreparationCommands "libxl" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.libxl)
+        ++ mkHookPreparationCommands "network" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.network));
 
   hookPreparationService = {
     description = "generates libvirtd hooks and links them into the hook directory";
