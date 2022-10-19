@@ -2,9 +2,10 @@
   inputs = {
     nixpkgs = { url = "github:nixos/nixpkgs/nixos-unstable"; };
     utils = { url = "github:numtide/flake-utils"; };
+    std = { url = "github:chessai/nix-std"; };
   };
 
-  outputs = { self, nixpkgs, utils, ... } @ inputs:
+  outputs = { self, nixpkgs, utils, std, ... } @ inputs:
     {
       nixosModules = {
         libvirtdHooks = import ./modules/libvirtd-hooks.nix;
