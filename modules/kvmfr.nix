@@ -8,9 +8,9 @@ let
   calculateSizeFromDimensions = dimensions:
     let
       ceilToPowerOf2 = n: std.num.pow 2 (std.num.bits.bitSize - std.num.bits.countLeadingZeros n);
-      bytes = dimensions.width * dimensions.height * (optionals (dimensions.hdr) * 2) * 4 * 2;
+      bytes = dimensions.width * dimensions.height * (if dimensions.hdr then 2 else 1) * 4 * 2;
     in
-    bytes / 1024 / 1024 + 10;
+    ceilToPowerOf2 (bytes / 1024 / 1024 + 10);
 
   kvmfrKernelParameter =
     let
