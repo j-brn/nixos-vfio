@@ -23,7 +23,7 @@ let
     concatStringsSep "\n" (imap0
       (index: deviceConfig:
         ''
-          SUBSYSTEM=="kvmfr", KERNEL="kvmfr${toString index}", OWNER="${deviceConfig.permissions.user}", GROUP="${deviceConfig.permissions.group}", MODE="${deviceConfig.permissions.mode}"
+          SUBSYSTEM=="kvmfr", KERNEL=="kvmfr${toString index}", OWNER="${deviceConfig.permissions.user}", GROUP="${deviceConfig.permissions.group}", MODE="${deviceConfig.permissions.mode}"
         ''
       )
       cfg.devices);
