@@ -19,14 +19,14 @@ let
     in
     "kvmfr.static_size_mb=${deviceSizesString}";
 
-  udevRules =
-    concatStringsSep "\n" (imap0
+  udevPackage = pkgs.writeTextDir "/lib/udev/rules.d/99-kvmfr.rules"
+    (concatStringsSep "\n" (imap0
       (index: deviceConfig:
         ''
           SUBSYSTEM=="kvmfr", KERNEL=="kvmfr${toString index}", OWNER="${deviceConfig.permissions.user}", GROUP="${deviceConfig.permissions.group}", MODE="${deviceConfig.permissions.mode}"
         ''
       )
-      cfg.devices);
+      cfg.devices));
 
   permissionsType =
     types.submodule
@@ -100,7 +100,7 @@ in
     boot.initrd.kernelModules = [ "kvmfr" ];
 
     boot.kernelParams = optionals (cfg.devices != [ ]) [ kvmfrKernelParameter ];
-    services.udev.extraRules = optionals (cfg.devices != [ ]) udevRules;
+    services.udev.packages = optionals (cfg.devices != [ ]) [ udevPackage ];
   };
 
   meta.maintainers = with maintainers; [ j-brn ];
