@@ -26,19 +26,19 @@ with lib; let
   };
 
   writeValidatedXml = name: document:
-    pkgs.runCommand "${name}.xml"
+    (pkgs.runCommand "${name}.xml"
       ''
         echo ${document} > document.xml
         virt-xml-validate document.xml domain
         echo ${document} > $out
-      '';
+      '');
 
   tmpfilesPackage =
     let
       rules = mapAttrsToList
         (name: guest:
           let
-            document = (writeValidatedXml name guest.config);
+            document = writeValidatedXml name guest.config;
             target =
               if guest.autostart
               then "/var/lib/libvirt/qemu/autostart/${name}.xml"
