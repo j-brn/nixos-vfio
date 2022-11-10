@@ -43,7 +43,7 @@ with lib; let
               then "/var/lib/libvirt/qemu/autostart/${name}.xml"
               else "/var/lib/libvirt/qemu/${name}.xml";
           in
-          "L ${target} - - - - ${document}")
+          "L+ ${target} - - - - ${document}")
         cfg;
     in
     pkgs.writeTextDir "lib/tmpfiles.d/libvirtd-guests.conf" (concatStringsSep "\n" rules);
