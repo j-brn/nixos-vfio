@@ -41,8 +41,8 @@ with lib; let
             document = writeValidatedXml name guest.config;
             target =
               if guest.autostart
-              then "/var/lib/libvirt/qemu/autostart/${name.xml}"
-              else "/var/lib/libvirt/qemu/${name.xml}";
+              then "/var/lib/libvirt/qemu/autostart/${name}.xml"
+              else "/var/lib/libvirt/qemu/${name}.xml";
           in
           "L ${target} - - - - ${document}")
         cfg;
