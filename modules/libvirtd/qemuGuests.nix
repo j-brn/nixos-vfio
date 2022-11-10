@@ -63,4 +63,5 @@ in
   ### Implementation ###
 
   config.systemd.tmpfiles.packages = [ tmpfilesPackage ];
+  config.systemd.services.libvirtd.after = [ "systemd-tmpfiles-setup.service" ];
 }
