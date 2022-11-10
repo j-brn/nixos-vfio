@@ -41,7 +41,7 @@ with lib; let
             document = writeValidatedXml name guest.config;
             target = "/var/libvirt/qemu/" + (optional (guest.autostart) "autostart/") + "${name.xml}";
           in
-          "L ${target} - - - - ${document}");
+          "L ${target} - - - - ${document}") cfg;
     in
     pkgs.writeText "libvirtd-guests" (concatStringsSep "\n" rules);
 
