@@ -29,7 +29,7 @@ with lib; let
     (pkgs.runCommand "${name}.xml" { }
       ''\
         echo ${document} > $out && \
-        ${pkgs.libvirt}/bin/virt-xml-validate ${name}.xml domain
+        ${pkgs.libvirt}/bin/virt-xml-validate ${name}.xml domain\
       '');
 
   tmpfilesPackage =
