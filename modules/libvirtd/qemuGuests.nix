@@ -63,5 +63,10 @@ in
   ### Implementation ###
 
   config.systemd.tmpfiles.packages = [ tmpfilesPackage ];
-  config.systemd.services.libvirtd.after = [ "systemd-tmpfiles-setup.service" ];
+
+  # re-create tempfiles before starting libvirtd
+  config.systemd.services.libvirtd.after = [
+    "systemd-tmpfiles-clean.service"
+    "systemd-tmpfiles-setup.service"
+  ];
 }
