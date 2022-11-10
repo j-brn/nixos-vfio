@@ -5,6 +5,7 @@
 }:
 with lib; let
   cfg = config.virtualisation.libvirtd.qemuGuests;
+  qemuDir = "/var/lib/libvirtd/qemu";
 
   guestType = types.submodule {
     options = {
@@ -32,22 +33,22 @@ with lib; let
     in
     pkgs.runCommand "${name}.xml" { } ''${validate} ${xmlFile} && cp ${xmlFile} $out'';
 
-  tmpfilesPackage =
-    let
-      rules = mapAttrsToList
-        (name: guest:
-          let
-            document = writeValidatedXml name guest.config;
-            target =
-              if guest.autostart
-              then "/var/lib/libvirt/qemu/autostart/${name}.xml"
-              else "/var/lib/libvirt/qemu/${name}.xml";
-          in
-          "L+ ${target} - - - - ${document}")
-        cfg;
-    in
-    pkgs.writeTextDir "lib/tmpfiles.d/libvirtd-guests.conf" (concatStringsSep "\n" ([ "e /var/lib/libvirtd/qemu - - - - -" ] ++ rules));
+  links = mapAttrsToList
+    (name: guest:
+      let
+        document = writeValidatedXml name guest.config;
+        target =
+          if guest.autostart
+          then "${qemuDir}/autostart/${name}.xml"
+          else "${qemuDir}/${name}.xml";
+      in
+      { source = document; inherit target; })
+    cfg;
 
+  setupScript = concatStringsSep "\n" ([ "mkdir -p ${qemuDir}/autostart" ]
+    ++ (map ({ source, target }: "ln -sf ${source} ${target}") links));
+
+  cleanupScript = concatStringsSep "\n" (map ({ target, ... }: "rm ${target}") links);
 in
 {
   ### Interface ###
@@ -62,11 +63,8 @@ in
 
   ### Implementation ###
 
-  config.systemd.tmpfiles.packages = [ tmpfilesPackage ];
-
-  # re-create tempfiles before starting libvirtd
-  config.systemd.services.libvirtd.after = [
-    "systemd-tmpfiles-clean.service"
-    "systemd-tmpfiles-setup.service"
-  ];
+  config.systemd.services.libvirtd = {
+    preStart = setupScript;
+    postStop = cleanupScript;
+  };
 }
