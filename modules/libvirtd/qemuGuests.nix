@@ -6,6 +6,7 @@
 with lib; let
   cfg = config.virtualisation.libvirtd.qemuGuests;
   qemuDir = "/var/lib/libvirtd/qemu";
+  virsh = "${pkgs.libvirt}/bin/virsh";
 
   guestType = types.submodule {
     options = {
@@ -23,32 +24,48 @@ with lib; let
           whether to start the guest on boot
         '';
       };
+
+      undefineOnCleanup = mkOption {
+        type = types.bool;
+        default = false;
+        description = mdDoc ''
+          whether the domain should be undefined when libvirtd shuts down
+        '';
+      };
     };
   };
 
-  writeValidatedXml = name: document:
+  defineDomainsScript =
+    concatStringsSep
+      "\n"
+      (mapAttrsToList
+        (name: guest:
+          let
+            xmlFile = pkgs.writeText "${name}.xml" guest.config;
+          in
+          ''${virsh} define ${xmlFile}'')
+        cfg);
+
+  autostartDomainsScript =
     let
-      validate = "${pkgs.libvirt}/bin/virt-xml-validate";
-      xmlFile = pkgs.writeText "${name}.xml" document;
+      domainsToAutostart = filterAttrs (name: guest: guest.autostart) cfg;
     in
-    pkgs.runCommand "${name}.xml" { } ''${validate} ${xmlFile} && cp ${xmlFile} $out'';
+    concatStringsSep
+      "\n"
+      (mapAttrsToList
+        (name: guest: "${virsh} autostart ${name}")
+        domainsToAutostart);
 
-  links = mapAttrsToList
-    (name: guest:
-      let
-        document = writeValidatedXml name guest.config;
-        target =
-          if guest.autostart
-          then "${qemuDir}/autostart/${name}.xml"
-          else "${qemuDir}/${name}.xml";
-      in
-      { source = document; inherit target; })
-    cfg;
+  undefineDomainsScript =
+    let
+      domainsToUndefine = filterAttrs (name: guest: guest.undefineOnCleanup) cfg;
+    in
+    concatStringsSep
+      "\n"
+      (mapAttrsToList
+        (name: guest: "${virsh} undefine ${name}")
+        domainsToUndefine);
 
-  setupScript = concatStringsSep "\n" ([ "mkdir -p ${qemuDir}/autostart" ]
-    ++ (map ({ source, target }: "ln -sf ${source} ${target}") links));
-
-  cleanupScript = concatStringsSep "\n" (map ({ target, ... }: "rm ${target}") links);
 in
 {
   ### Interface ###
@@ -63,8 +80,21 @@ in
 
   ### Implementation ###
 
-  config.systemd.services.libvirtd = {
-    preStart = setupScript;
-    postStop = cleanupScript;
+  config.systemd.services.define-libvirtd-domains = {
+    description = "defines libvirtd domains";
+    serviceConfig.Type = "oneshot";
+    after = [ "libvirtd.service" ];
+    wantedBy = [ "multi-user.target" ];
+    script = defineDomainsScript;
   };
+
+  config.systemd.services.autostart-libvirtd-domains = {
+    description = "configures autostart for libvirtd domains";
+    serviceConfig.Type = "oneshot";
+    after = [ "define-libvirtd-domains.service" ];
+    wantedBy = [ "multi-user.target" ];
+    script = autostartDomainsScript;
+  };
+
+  config.systemd.services.libvirtd.preStop = undefineDomainsScript;
 }
