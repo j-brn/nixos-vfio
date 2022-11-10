@@ -6,7 +6,7 @@
 with lib; let
   cfg = config.virtualisation.libvirtd.qemuGuests;
 
-  questType = types.submodule {
+  guestType = types.submodule {
     options = {
       config = mkOption {
         type = types.str;
