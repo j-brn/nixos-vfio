@@ -27,7 +27,7 @@ with lib; let
 
   writeValidatedXml = name: document:
     (pkgs.runCommand "${name}.xml" { }
-      ''
+      ''\
         echo ${document} > $out && \
         ${pkgs.libvirt}/bin/virt-xml-validate ${name}.xml domain
       '');
