@@ -30,7 +30,7 @@ with lib; let
       validate = "${pkgs.libvirt}/bin/virt-xml-validate";
       xmlFile = pkgs.writeText "${name}.xml" document;
     in
-    pkgs.runCommand "${name}.xml" { } ''validate ${xmlFile} && cp ${xmlFile} $out'';
+    pkgs.runCommand "${name}.xml" { } ''${validate} ${xmlFile} && cp ${xmlFile} $out'';
 
   tmpfilesPackage =
     let
