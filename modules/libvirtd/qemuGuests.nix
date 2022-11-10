@@ -38,7 +38,7 @@ with lib; let
       rules = mapAttrsToList
         (name: guest:
           let
-            document = ((writeValidatedXml name) guest.config);
+            document = (writeValidatedXml name) (guest.config);
             target =
               if guest.autostart
               then "/var/lib/libvirt/qemu/autostart/${name}.xml"
