@@ -26,11 +26,10 @@ with lib; let
   };
 
   writeValidatedXml = name: document:
-    (pkgs.runCommand "${name}.xml" { }
-      ''\
-        echo ${document} > $out && \
-        ${pkgs.libvirt}/bin/virt-xml-validate ${name}.xml domain\
-      '');
+    let
+      validate = "${pkgs.libvirt}/bin/virt-xml-validate";
+    in
+    pkgs.runCommand "${name}.xml" { } ''echo ${document} > $out && ${validate} ${name}.xml domain'';
 
   tmpfilesPackage =
     let
