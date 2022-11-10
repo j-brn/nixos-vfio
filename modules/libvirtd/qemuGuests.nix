@@ -4,7 +4,7 @@
 , ...
 }:
 with lib; let
-  cfg = config.virtualisation.libvirt.qemuGuests;
+  cfg = config.virtualisation.libvirtd.qemuGuests;
 
   questType = types.submodule {
     options = {
@@ -49,7 +49,7 @@ in
 {
   ### Interface ###
 
-  options.virtualisation.libvirt.guests = mkOption {
+  options.virtualisation.libvirtd.qemuGuests = mkOption {
     type = attrsOf (guestType);
     default = { };
     description = mdDoc ''
@@ -58,5 +58,6 @@ in
   };
 
   ### Implementation ###
+
   systemd.tmpfiles.packages = [ tmpfilesPackage ];
 }
