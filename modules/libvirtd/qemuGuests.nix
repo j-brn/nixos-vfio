@@ -39,7 +39,7 @@ with lib; let
         (name: guest:
           let
             document = writeValidatedXml name guest.config;
-            target = "/var/libvirt/qemu/" + (optional (guest.autostart) "autostart/") + "${name.xml}";
+            target = "/var/libvirt/qemu/${(optional (guest.autostart) "autostart/")}${name.xml}";
           in
           "L ${target} - - - - ${document}") cfg;
     in
