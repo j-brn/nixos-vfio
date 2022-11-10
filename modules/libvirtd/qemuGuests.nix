@@ -50,7 +50,7 @@ in
   ### Interface ###
 
   options.virtualisation.libvirtd.qemuGuests = mkOption {
-    type = attrsOf (guestType);
+    type = types.attrsOf (guestType);
     default = { };
     description = mdDoc ''
       libvirtd guests
