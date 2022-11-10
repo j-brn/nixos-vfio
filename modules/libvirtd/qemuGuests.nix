@@ -10,7 +10,7 @@ with lib; let
     options = {
       config = mkOption {
         type = types.str;
-        descripton = mdDoc ''
+        description = mdDoc ''
           libvirtd domain xml
         '';
       };
