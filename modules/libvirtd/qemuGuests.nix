@@ -59,5 +59,5 @@ in
 
   ### Implementation ###
 
-  systemd.tmpfiles.packages = [ tmpfilesPackage ];
+  config.systemd.tmpfiles.packages = [ tmpfilesPackage ];
 }
