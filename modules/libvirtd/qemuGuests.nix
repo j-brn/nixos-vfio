@@ -46,7 +46,7 @@ with lib; let
           "L ${target} - - - - ${document}")
         cfg;
     in
-    pkgs.writeText "libvirtd-guests" (concatStringsSep "\n" rules);
+    pkgs.writeTextDir "lib/tmpfiles.d/libvirtd-guests" (concatStringsSep "\n" rules);
 
 in
 {
