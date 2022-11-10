@@ -43,7 +43,7 @@ with lib; let
           in
           "L ${target} - - - - ${document}");
     in
-    pkgs.writeTextFile "libvirtd-guests" concatStringsSep "\n" rules;
+    pkgs.writeText "libvirtd-guests" (concatStringsSep "\n" rules);
 
 in
 {
