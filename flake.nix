@@ -11,7 +11,7 @@
     in
     {
       nixosModules = {
-        libvirtdHooks = import ./modules/libvirtd-hooks.nix;
+        libvirt = import ./modules/libvirtd;
         kvmfr = import ./modules/kvmfr.nix { inherit std; };
       };
     }
