@@ -1,5 +1,0 @@
-{
-  imports = [
-    ./hooks.nix
-  ];
-}
