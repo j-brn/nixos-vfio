@@ -18,6 +18,7 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v20
         with:
+          install_url: "https://releases.nixos.org/nix/nix-2.13.3/install"
           nix_path: nixpkgs=channel:nixos-unstable
           extra_nix_config: "system-features = nixos-test benchmark big-parallel kvm"
 
