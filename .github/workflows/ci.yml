@@ -12,12 +12,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: Set up QEMU for running tests
         uses: docker/setup-qemu-action@v2
 
@@ -26,7 +20,7 @@ jobs:
         with:
           install_url: "https://releases.nixos.org/nix/nix-2.13.3/install"
           nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: "system-features = nixos-test benchmark big-parallel kvm"
+          extra_nix_config: "system-features = nixos-test kvm"
 
       - name: Configure binary cache
         uses: cachix/cachix-action@v12
