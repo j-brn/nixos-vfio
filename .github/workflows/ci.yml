@@ -19,8 +19,7 @@ jobs:
         uses: cachix/install-nix-action@v20
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            system-features = kvm nixos-test
+          extra_nix_config: "system-features = nixos-test benchmark big-parallel kvm"
 
       - name: Configure binary cache
         uses: cachix/cachix-action@v12
