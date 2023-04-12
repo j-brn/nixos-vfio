@@ -58,7 +58,7 @@ let
       };
       height = mkOption {
         type = types.number;
-        description = "Maximum vertical video size taht should be supported by this device.";
+        description = "Maximum vertical video size that should be supported by this device.";
       };
       hdr = mkOption {
         type = types.bool;
