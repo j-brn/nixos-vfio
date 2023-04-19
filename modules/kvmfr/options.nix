@@ -27,13 +27,13 @@ let
     options = {
       width = mkOption {
         type = types.number;
-        description =
-          mdDoc "Maximum horizontal video size that should be supported by this device.";
+        description = mdDoc
+          "Maximum horizontal video size that should be supported by this device.";
       };
       height = mkOption {
         type = types.number;
-        description =
-          mdDoc "Maximum vertical video size that should be supported by this device.";
+        description = mdDoc
+          "Maximum vertical video size that should be supported by this device.";
       };
       hdr = mkOption {
         type = types.bool;
