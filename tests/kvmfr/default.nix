@@ -44,19 +44,24 @@ in pkgs.nixosTest ({
   };
 
   testScript = ''
-    start_all()
+    # Wait for udev to take action
+    machine.wait_for_unit("systemd-udevd.service")
 
     # check kernel parameters
     machine.succeed('grep -q "kvmfr.static_size_mb=32,256" /proc/cmdline')
 
-    # check device one
-    machine.succeed('[[ "$(stat -c \"%U\" /dev/kvmfr0)" == "tester" ]] || exit 1')
-    machine.succeed('[[ "$(stat -c \"%G\" /dev/kvmfr0)" == "root" ]] || exit 1')
-    machine.succeed('[[ "$(stat -c \"%a\" /dev/kvmfr0)" == "600" ]] || exit 1')
-
-    # device two
-    machine.succeed('[[ "$(stat -c \"%U\" /dev/kvmfr1)" == "tester" ]] || exit 1')
-    machine.succeed('[[ "$(stat -c \"%G\" /dev/kvmfr1)" == "root" ]] || exit 1')
-    machine.succeed('[[ "$(stat -c \"%a\" /dev/kvmfr1)" == "777" ]] || exit 1')
+    # check properties of kvmfr device nodes
+    for dev, prop, expected in [
+        ("/dev/kvmfr0", "%U", "tester"),
+        ("/dev/kvmfr0", "%G", "root"),
+        ("/dev/kvmfr0", "%a", "600"),
+        ("/dev/kvmfr1", "%U", "tester"),
+        ("/dev/kvmfr1", "%G", "root"),
+        ("/dev/kvmfr1", "%a", "777"),
+    ]:
+        exitcode, stdout = machine.execute(f"stat -c '{prop}' '{dev}'")
+        stdout = stdout.strip()
+        assert exitcode == 0, f"Checking property '{prop}' of '{dev}' failed. Exitcode {exitcode}"
+        assert stdout == expected, f"{dev} has wrong {prop}. Expected '{expected}', got '{stdout}'"
   '';
 })
