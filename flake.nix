@@ -25,6 +25,9 @@
           module = self.nixosModules.kvmfr;
         };
 
+        packages.docs = pkgs.callPackage ./docs/options-doc.nix {
+          modules = { kvmfr = ./modules/kvmfr/options.nix; };
+        };
         formatter = inputs.nixfmt.packages.${system}.default;
         devShells.default = pkgs.mkShellNoCC { };
       };
