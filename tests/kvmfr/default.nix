@@ -38,31 +38,15 @@ in pkgs.nixosTest ({
         home = "/home/tester";
       };
 
-      # https://github.com/NixOS/nixpkgs/issues/62155
-      systemd.services.wait-for-udev-settle-hack = {
-        enable = true;
-        description =
-          "Dummy service that starts after udev-settle so we have a unit we can wait for";
-        after = [ "systemd-udev-settle.service" ];
-        wantedBy = [ "multi-user.target" ];
-
-        serviceConfig = {
-          # do noting but keep the unit active
-          ExecStart = "${pkgs.busybox}/bin/tail -f /dev/null";
-        };
-      };
-
       virtualisation.kvmfr = kvmfrConfig;
       virtualisation.graphics = false;
     };
   };
 
   testScript = ''
-    # Wait for udev to take action
-    machine.wait_for_unit("wait-for-udev-settle-hack.service")
-
     # check kernel parameters
     machine.succeed('grep -q "kvmfr.static_size_mb=32,256" /proc/cmdline')
+    machine.wait_for_unit("systemd-udevd.service")
 
     # check properties of kvmfr device nodes
     for dev, prop, expected in [
@@ -73,6 +57,9 @@ in pkgs.nixosTest ({
         ("/dev/kvmfr1", "%G", "root"),
         ("/dev/kvmfr1", "%a", "777"),
     ]:
+        name = dev.split('/')[-1]
+        machine.wait_until_succeeds(f"systemctl status dev-{name}.device; test $? -ne 4")
+
         exitcode, stdout = machine.execute(f"stat -c '{prop}' '{dev}'")
         stdout = stdout.strip()
         assert exitcode == 0, f"Checking property '{prop}' of '{dev}' failed. Exitcode {exitcode}"
