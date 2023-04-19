@@ -38,6 +38,20 @@ in pkgs.nixosTest ({
         home = "/home/tester";
       };
 
+      # https://github.com/NixOS/nixpkgs/issues/62155
+      systemd.services.wait-for-udev-settle-hack = {
+        enable = true;
+        description =
+          "Dummy service that starts after udev-settle so we have a unit we can wait for";
+        after = [ "systemd-udev-settle.service" ];
+        wantedBy = [ "multi-user.target" ];
+
+        serviceConfig = {
+          # do noting but keep the unit active
+          ExecStart = "${pkgs.busybox}/bin/tail -f /dev/null";
+        };
+      };
+
       virtualisation.kvmfr = kvmfrConfig;
       virtualisation.graphics = false;
     };
@@ -45,7 +59,7 @@ in pkgs.nixosTest ({
 
   testScript = ''
     # Wait for udev to take action
-    machine.wait_for_unit("systemd-udevd.service")
+    machine.wait_for_unit("wait-for-udev-settle-hack.service")
 
     # check kernel parameters
     machine.succeed('grep -q "kvmfr.static_size_mb=32,256" /proc/cmdline')
