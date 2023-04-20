@@ -1,0 +1,55 @@
+name: "pages"
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v20
+        with:
+          install_url: "https://releases.nixos.org/nix/nix-2.13.3/install"
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: "system-features = nixos-test kvm"
+
+      - name: Configure binary cache
+        uses: cachix/cachix-action@v12
+        with:
+          name: nixos-vfio
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Build docs
+        id: build
+        run: nix build .#docbook
+
+      - name: Prepare assets for upload
+        run: cp -r --dereference --no-preserve=mode,ownership result/ public/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: public/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
