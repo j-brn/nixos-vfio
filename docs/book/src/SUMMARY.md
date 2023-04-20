@@ -5,3 +5,4 @@
 - [Guide](guide.md)
 - [Options](options.md)
   - [KVMFR](options/kvmfr.md)
+  - [VFIO](options/vfio.md)

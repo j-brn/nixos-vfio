@@ -15,8 +15,9 @@
       systems = [ "x86_64-linux" ];
 
       flake = {
-        nixosModules.kvmfr =
-          import ./modules/kvmfr { std = inputs.nix-std.lib; };
+        nixosModules = {
+          kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; }; };
+          vfio = import ./modules/vfio;
       };
 
       perSystem = { system, pkgs, ... }: {
@@ -25,9 +26,13 @@
           module = self.nixosModules.kvmfr;
         };
 
-        packages.module-options-doc = pkgs.callPackage ./docs/module-options-doc.nix {
-          modules = { kvmfr = ./modules/kvmfr/options.nix; };
-        };
+        packages.module-options-doc =
+          pkgs.callPackage ./docs/module-options-doc.nix {
+            modules = {
+              kvmfr = ./modules/kvmfr/options.nix;
+              vfio = ./modules/vfio/options.nix;
+            };
+          };
 
         packages.docbook = pkgs.callPackage ./docs/docbook.nix {
           module-options-doc = self.packages.${system}.module-options-doc;
