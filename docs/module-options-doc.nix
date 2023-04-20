@@ -7,7 +7,7 @@ let
 
   mvCommands = with lib;
     concatStringsSep "\n" (mapAttrsToList (name: doc: ''
-      cat ${doc.optionsAsciiDoc} >> $out/${name}.adoc
+      cat ${doc.optionsCommonMark} >> $out/${name}.md
     '') optionsDocs);
 
 in pkgs.runCommand "nixos-options-combined" { } ''

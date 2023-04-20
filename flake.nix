@@ -25,11 +25,17 @@
           module = self.nixosModules.kvmfr;
         };
 
-        packages.docs = pkgs.callPackage ./docs/options-doc.nix {
+        packages.module-options-doc = pkgs.callPackage ./docs/module-options-doc.nix {
           modules = { kvmfr = ./modules/kvmfr/options.nix; };
         };
+
+        packages.docbook = pkgs.callPackage ./docs/docbook.nix {
+          module-options-doc = self.packages.${system}.module-options-doc;
+        };
+
         formatter = inputs.nixfmt.packages.${system}.default;
-        devShells.default = pkgs.mkShellNoCC { };
+        devShells.default =
+          pkgs.mkShellNoCC { buildInputs = with pkgs; [ mdbook ]; };
       };
     };
 }
