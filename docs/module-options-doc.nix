@@ -2,8 +2,11 @@
 let
   optionsDocs = with lib;
     mapAttrs (name: module:
-      (nixosOptionsDoc { options = evalModules { modules = [ module ]; }; }))
-    modules;
+      (nixosOptionsDoc {
+        options = (evalModules {
+          modules = [ { config._module.check = false; } module ];
+        }).options;
+      })) modules;
 
   commands = with lib;
     concatStringsSep "\n" (mapAttrsToList (name: doc: ''
