@@ -15,27 +15,33 @@
       systems = [ "x86_64-linux" ];
 
       flake = {
-        nixosModules.kvmfr =
-          import ./modules/kvmfr { std = inputs.nix-std.lib; };
+        nixosModules = {
+          kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
+        };
       };
 
-      perSystem = { system, pkgs, ... }: {
+      perSystem = { system, pkgs, self', ... }: {
         checks.kvmfr = import ./tests/kvmfr {
           inherit pkgs;
           module = self.nixosModules.kvmfr;
         };
 
-        packages.module-options-doc = pkgs.callPackage ./docs/module-options-doc.nix {
-          modules = { kvmfr = ./modules/kvmfr/options.nix; };
-        };
-
-        packages.docbook = pkgs.callPackage ./docs/docbook.nix {
-          module-options-doc = self.packages.${system}.module-options-doc;
+        packages = {
+          docs-options = pkgs.callPackage ./docs/module-options-doc.nix {
+            modules = (self.nixosModules);
+          };
+          docs-book = pkgs.callPackage ./docs/docbook.nix {
+            module-options-doc = self'.packages.docs-options;
+          };
         };
 
         formatter = inputs.nixfmt.packages.${system}.default;
-        devShells.default =
-          pkgs.mkShellNoCC { buildInputs = with pkgs; [ mdbook ]; };
+        devShells.default = pkgs.mkShellNoCC {
+          buildInputs = with pkgs; [
+            mdbook
+            inputs.nixfmt.packages.${system}.default
+          ];
+        };
       };
     };
 }
