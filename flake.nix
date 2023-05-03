@@ -17,13 +17,20 @@
       flake = {
         nixosModules = {
           kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
+          staticfiles = import ./modules/staticfiles;
         };
       };
 
       perSystem = { system, pkgs, self', ... }: {
-        checks.kvmfr = import ./tests/kvmfr {
-          inherit pkgs;
-          module = self.nixosModules.kvmfr;
+        checks = {
+          kvmfr = import ./tests/kvmfr {
+            inherit pkgs;
+            module = self.nixosModules.kvmfr;
+          };
+          staticfiles = import ./tests/staticfiles {
+            inherit pkgs;
+            module = self.nixosModules.staticfiles;
+          };
         };
 
         packages = {
