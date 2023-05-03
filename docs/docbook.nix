@@ -7,7 +7,7 @@ in stdenv.mkDerivation {
   buildInputs = [ module-options-doc ];
   nativeBuildInputs = [ mdbook ];
 
-  buildPhase  = ''
+  buildPhase = ''
     ln -s ${module-options-doc} ./src/options
     mdbook build
   '';
