@@ -107,31 +107,31 @@ in {
   options.virtualisation.libvirtd.hooks = {
     daemon = mkOption {
       type = mkHooksSubmoduleType "daemon";
-      description = "daemon hooks";
+      description = mdDoc "daemon hooks";
       default = { };
     };
 
     qemu = mkOption {
       type = mkHooksSubmoduleType "qemu";
-      description = "qemu hooks";
+      description = mdDoc "qemu hooks";
       default = { };
     };
 
     lxc = mkOption {
       type = mkHooksSubmoduleType "lxc";
-      description = "lxc hooks";
+      description = mdDoc "lxc hooks";
       default = { };
     };
 
     libxl = mkOption {
       type = mkHooksSubmoduleType "libxl";
-      description = "libxl hooks";
+      description = mdDoc "libxl hooks";
       default = { };
     };
 
     network = mkOption {
       type = mkHooksSubmoduleType "network";
-      description = "network hooks";
+      description = mdDoc "network hooks";
       default = { };
     };
   };

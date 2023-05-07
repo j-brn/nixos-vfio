@@ -19,6 +19,7 @@
           kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
           staticfiles = import ./modules/staticfiles;
           libvirt = import ./modules/libvirt;
+          vfio = import ./modules/vfio;
         };
       };
 
