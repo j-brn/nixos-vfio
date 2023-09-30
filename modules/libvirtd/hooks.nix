@@ -1,87 +1,63 @@
-{ config
-, lib
-, pkgs
-, ...
-}:
-with lib; let
-  cfg = config.virtualisation.libvirtd.hooks;
-  hookDir = "/var/lib/libvirt/hooks";
+{ config, lib, pkgs, ... }:
+with lib;
+let
+  cfg = config.vfio.libvirtd.hooks;
 
-  mkHook = name: hookConfig:
+  mkHook = name: hook:
     let
-      innerHook = pkgs.writeShellScript "hook" hookConfig.script;
-      wrapper =
-        let
-          objectsCondition =
-            if (hookConfig.conditions.objects != null)
-            then "$1 == @(" + (concatStringsSep "|" hookConfig.conditions.objects) + ")"
-            else "";
+      innerHook = pkgs.writeShellScript "hook" hook.script;
+      wrapper = let
+        objectsCondition = if (hook.scope.objects != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.objects) + ")"
+        else
+          "true";
 
-          operationsCondition =
-            if (hookConfig.conditions.operations != null)
-            then "$1 == @(" + (concatStringsSep "|" hookConfig.conditions.operations) + ")"
-            else "true";
+        operationsCondition = if (hook.scope.operations != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.operations) + ")"
+        else
+          "true";
 
-          subOperationsCondition =
-            if (hookConfig.conditions.subOperations != null)
-            then "$1 == @(" + (concatStringsSep "|" hookConfig.conditions.subOperations) + ")"
-            else "true";
-        in
-        ''
-          if true && [[ ${objectsCondition} ]] && [[ ${operationsCondition} ]] && [[ ${subOperationsCondition} ]]; then
-            ${innerHook} "$@" < /dev/stdin
-          fi
-        '';
-    in
-    pkgs.writeShellScript name wrapper;
+        subOperationsCondition = if (hook.scope.subOperations != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.subOperations) + ")"
+        else
+          "true";
+      in ''
+        if true && [[ ${objectsCondition} ]] && [[ ${operationsCondition} ]] && [[ ${subOperationsCondition} ]]; then
+          ${innerHook} "$@" < /dev/stdin
+        fi
+      '';
+    in pkgs.writeShellScript name wrapper;
 
-  mkHookPreparationCommands = driver: hookConfigs:
+  mkHookStaticFileEntries = driver: hookConfigs:
     let
-      hooks = mapAttrs mkHook hookConfigs;
+      hooks = mapAttrs (mkHook) hookConfigs;
       destination = "${hookDir}/${driver}.d/";
-    in
-    mapAttrsToList (name: hook: "mkdir -p ${destination} && ln -sf ${hook} ${destination}/${name}") hooks;
+    in mapAttrs' (name: hook: nameValuePair "${destination}/${name}" hook)
+    hooks;
 
-  hookPreparationScript =
-    concatStringsSep "\n"
-      ([ "rm -rf ${hookDir}" ]
-        ++ mkHookPreparationCommands "daemon" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.daemon)
-        ++ mkHookPreparationCommands "qemu" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.qemu)
-        ++ mkHookPreparationCommands "lxc" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.lxc)
-        ++ mkHookPreparationCommands "libxl" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.libxl)
-        ++ mkHookPreparationCommands "network" (filterAttrs (name: hookConfig: hookConfig.enable) cfg.network));
-
-  hookPreparationService = {
-    description = "generates libvirtd hooks and links them into the hook directory";
-    serviceConfig.Type = "oneshot";
-    before = [ "libvirtd.service" ];
-    wantedBy = [ "multi-user.target" ];
-    script = hookPreparationScript;
-  };
-
-  hookConditionsSubmodule = with types;
+  hookscopeSubmodule = with types;
     submodule {
       options = {
         objects = mkOption {
-          type = nullOr (listOf string);
+          type = nullOr (listOf str);
           default = null;
-          description = mkdDoc ''
+          description = mdDoc ''
             If not null, the hook is only executed if the object matches a value in the given list.
           '';
         };
 
         operations = mkOption {
-          type = nullOr (listOf string);
+          type = nullOr (listOf str);
           default = null;
-          description = mkdDoc ''
+          description = mdDoc ''
             If not null, the hook is only executed if the operation matches a value in the given list.
           '';
         };
 
         subOperations = mkOption {
-          type = nullOr (listOf string);
+          type = nullOr (listOf str);
           default = null;
-          description = mkdDoc ''
+          description = mdDoc ''
             If not null, the hook is only executed if the sub-operation matches a value in the given list.
           '';
         };
@@ -100,8 +76,8 @@ with lib; let
           '';
         };
 
-        conditions = mkOption {
-          type = hookConditionsSubmodule;
+        scope = mkOption {
+          type = hookscopeSubmodule;
           default = null;
           description = lib.mdDoc ''
             Limit the execution of the hook to certain objects, operations or sub-operations.
@@ -109,7 +85,7 @@ with lib; let
         };
 
         script = mkOption {
-          type = string;
+          type = str;
           default = "";
           description = lib.mdDoc ''
             Hook to execute
@@ -117,18 +93,17 @@ with lib; let
         };
 
         driver = mkOption {
-          type = string;
+          type = str;
           default = driver;
           internal = true;
           visible = true;
         };
       };
     });
-in
-{
+in {
   ###### interface
 
-  options.virtualisation.libvirtd.hooks = {
+  options.vfio.libvirtd.hooks = {
     daemon = mkOption {
       type = mkHooksSubmoduleType "daemon";
       description = "daemon hooks";
@@ -160,6 +135,5 @@ in
     };
   };
 
-  ###### implementation
-  config.systemd.services.prepareLibvirtdHooks = hookPreparationService;
+  config.virtualisation.libvirtd.hooks = mapAttrs (driver: hooks: mapAttrs (mkHook) hooks) cfg;
 }
