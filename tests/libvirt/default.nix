@@ -7,11 +7,13 @@ in pkgs.nixosTest ({
     machine = { config, ... }: {
       inherit imports;
 
-      virtualisation.libvirtd.hooks.qemu = {
+      virtualisation.libvirtd.enable = true;
+
+      vfio.libvirtd.hooks.qemu = {
         printSomethingBeforeWin10Starts = {
           enable = true;
 
-          conditions = {
+          scope = {
             objects = [ "win10" ];
             operations = [ "prepare" ];
           };
@@ -25,6 +27,7 @@ in pkgs.nixosTest ({
   };
 
   testScript = ''
+    machine.wait_for_unit("libvirtd.service")
     machine.succeed("[ -f '/var/lib/libvirt/hooks/qemu.d/printSomethingBeforeWin10Starts' ]")
   '';
 })

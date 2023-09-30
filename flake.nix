@@ -3,11 +3,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     nix-std.url = "github:chessai/nix-std";
-
-    nixfmt = {
-      url = "github:serokell/nixfmt";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs@{ flake-parts, self, ... }:
@@ -47,11 +42,11 @@
           };
         };
 
-        formatter = inputs.nixfmt.packages.${system}.default;
+        formatter = inputs.nixpkgs.legacyPackages.${system}.nixfmt;
         devShells.default = pkgs.mkShellNoCC {
           buildInputs = with pkgs; [
             mdbook
-            inputs.nixfmt.packages.${system}.default
+            nixfmt
           ];
         };
       };

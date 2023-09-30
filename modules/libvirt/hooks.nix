@@ -1,25 +1,24 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
-  cfg = config.virtualisation.libvirtd.hooks;
-  hookDir = "/var/lib/libvirt/hooks";
+  cfg = config.vfio.libvirtd.hooks;
 
-  mkHook = name: cfg:
+  mkHook = name: hook:
     let
-      innerHook = pkgs.writeShellScript "hook" cfg.script;
+      innerHook = pkgs.writeShellScript "hook" hook.script;
       wrapper = let
-        objectsCondition = if (cfg.conditions.objects != null) then
-          "$1 == @(" + (concatStringsSep "|" cfg.conditions.objects) + ")"
+        objectsCondition = if (hook.scope.objects != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.objects) + ")"
         else
           "true";
 
-        operationsCondition = if (cfg.conditions.operations != null) then
-          "$1 == @(" + (concatStringsSep "|" cfg.conditions.operations) + ")"
+        operationsCondition = if (hook.scope.operations != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.operations) + ")"
         else
           "true";
 
-        subOperationsCondition = if (cfg.conditions.subOperations != null) then
-          "$1 == @(" + (concatStringsSep "|" cfg.conditions.subOperations) + ")"
+        subOperationsCondition = if (hook.scope.subOperations != null) then
+          "$1 == @(" + (concatStringsSep "|" hook.scope.subOperations) + ")"
         else
           "true";
       in ''
@@ -36,7 +35,7 @@ let
     in mapAttrs' (name: hook: nameValuePair "${destination}/${name}" hook)
     hooks;
 
-  hookConditionsSubmodule = with types;
+  hookscopeSubmodule = with types;
     submodule {
       options = {
         objects = mkOption {
@@ -77,8 +76,8 @@ let
           '';
         };
 
-        conditions = mkOption {
-          type = hookConditionsSubmodule;
+        scope = mkOption {
+          type = hookscopeSubmodule;
           default = null;
           description = lib.mdDoc ''
             Limit the execution of the hook to certain objects, operations or sub-operations.
@@ -104,7 +103,7 @@ let
 in {
   ###### interface
 
-  options.virtualisation.libvirtd.hooks = {
+  options.vfio.libvirtd.hooks = {
     daemon = mkOption {
       type = mkHooksSubmoduleType "daemon";
       description = "daemon hooks";
@@ -136,17 +135,5 @@ in {
     };
   };
 
-  ###### implementation
-  config.environment.staticFiles.files = mkMerge [
-    (mkHookStaticFileEntries "daemon"
-      (filterAttrs (name: hookConfig: hookConfig.enable) cfg.daemon))
-    (mkHookStaticFileEntries "qemu"
-      (filterAttrs (name: hookConfig: hookConfig.enable) cfg.qemu))
-    (mkHookStaticFileEntries "lxc"
-      (filterAttrs (name: hookConfig: hookConfig.enable) cfg.lxc))
-    (mkHookStaticFileEntries "libxl"
-      (filterAttrs (name: hookConfig: hookConfig.enable) cfg.libxl))
-    (mkHookStaticFileEntries "network"
-      (filterAttrs (name: hookConfig: hookConfig.enable) cfg.network))
-  ];
+  config.virtualisation.libvirtd.hooks = mapAttrs (driver: hooks: mapAttrs (mkHook) hooks) cfg;
 }
