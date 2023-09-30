@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
-  cfg = config.vfio.libvirtd.hooks;
+  cfg = config.virtualisation.libvirtd.scopedHooks;
 
   mkHook = name: hook:
     let
@@ -103,7 +103,7 @@ let
 in {
   ###### interface
 
-  options.vfio.libvirtd.hooks = {
+  options.virtualisation.libvirtd.scopedHooks = {
     daemon = mkOption {
       type = mkHooksSubmoduleType "daemon";
       description = "daemon hooks";

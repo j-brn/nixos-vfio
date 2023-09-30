@@ -9,7 +9,7 @@ in pkgs.nixosTest ({
 
       virtualisation.libvirtd.enable = true;
 
-      vfio.libvirtd.hooks.qemu = {
+      virtualisation.libvirtd.scopedHooks.qemu = {
         printSomethingBeforeWin10Starts = {
           enable = true;
 
