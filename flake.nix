@@ -13,7 +13,7 @@
         nixosModules = {
           kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
           staticfiles = import ./modules/staticfiles;
-          libvirt = import ./modules/libvirt;
+          libvirtd = import ./modules/libvirtd;
         };
       };
 
@@ -27,7 +27,7 @@
             inherit pkgs;
             module = self.nixosModules.staticfiles;
           };
-          libvirt = import ./tests/libvirt {
+          libvirtd = import ./tests/libvirtd {
             inherit pkgs;
             imports = lib.attrValues self.nixosModules;
           };

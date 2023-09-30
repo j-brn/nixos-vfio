@@ -5,5 +5,5 @@
 - [Guide](guide.md)
 - [Options](options.md)
   - [KVMFR](options/kvmfr.md)
-  - [Libvirt](options/libvirt.md)
+  - [Libvirtd](options/libvirtd.md)
   - [StaticFiles](options/staticfiles.md)
