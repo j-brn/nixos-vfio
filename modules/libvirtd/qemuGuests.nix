@@ -81,7 +81,7 @@ in
   ### Implementation ###
 
   config.systemd.services.define-libvirtd-domains = {
-    description = "defines libvirtd domains";
+    description = "define libvirtd domains";
     serviceConfig.Type = "oneshot";
     after = [ "libvirtd.service" ];
     wantedBy = [ "multi-user.target" ];
@@ -89,7 +89,7 @@ in
   };
 
   config.systemd.services.autostart-libvirtd-domains = {
-    description = "configures autostart for libvirtd domains";
+    description = "configure autostart for libvirtd domains";
     serviceConfig.Type = "oneshot";
     after = [ "define-libvirtd-domains.service" ];
     wantedBy = [ "multi-user.target" ];
