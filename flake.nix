@@ -28,6 +28,10 @@
             inherit pkgs;
             imports = lib.attrValues self.nixosModules;
           };
+          virtualisation = import ./tests/virtualisation {
+            inherit pkgs;
+            module = self.nixosModules.virtualisation;
+          };
         };
 
         packages = {
