@@ -12,8 +12,9 @@
       flake = {
         nixosModules = {
           kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
-          staticfiles = import ./modules/staticfiles;
           libvirtd = import ./modules/libvirtd;
+          virtualisation = import ./modules/virtualisation;
+          vfio = import ./modules/vfio;
         };
       };
 
@@ -23,13 +24,13 @@
             inherit pkgs;
             module = self.nixosModules.kvmfr;
           };
-          staticfiles = import ./tests/staticfiles {
-            inherit pkgs;
-            module = self.nixosModules.staticfiles;
-          };
           libvirtd = import ./tests/libvirtd {
             inherit pkgs;
             imports = lib.attrValues self.nixosModules;
+          };
+          virtualisation = import ./tests/virtualisation {
+            inherit pkgs;
+            module = self.nixosModules.virtualisation;
           };
         };
 
