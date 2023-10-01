@@ -33,9 +33,7 @@ in {
   };
 
   config.virtualisation.libvirtd.qemu.verbatimConfig = ''
-    clear_emulation_capabilities = ${
-      boolToZeroOne cfg.clearEmulationCapabilities
-    }
+    clear_emulation_capabilities = ${boolToZeroOne cfg.clearEmulationCapabilities}
     cgroup_device_acl = [
       ${aclString}
     ]
