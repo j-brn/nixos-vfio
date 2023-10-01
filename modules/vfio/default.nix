@@ -1,4 +1,4 @@
-{ lib, pkgs, config, ... }:
+{ lib, pkgs, kernel, config, ... }:
 with lib;
 let
   cfg = config.virtualisation.vfio;
@@ -53,7 +53,7 @@ in {
         "kvm.report_ignored_msrs=0"
       ]);
 
-    boot.kernelModules = [ "vfio_virqfd" "vfio_pci" "vfio_iommu_type1" "vfio" ];
+    boot.kernelModules = lib.optional (kernel.kernelOlder "6.2") [ "vfio_virqfd" "vfio_pci" "vfio_iommu_type1" "vfio" ];
 
     boot.initrd.kernelModules =
       [ "vfio_virqfd" "vfio_pci" "vfio_iommu_type1" "vfio" ];
