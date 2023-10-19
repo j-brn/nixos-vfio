@@ -19,10 +19,12 @@ in {
     deviceACL = mkOption {
       type = types.listOf types.str;
       default = [ ];
+      description = "allowed devices";
     };
     clearEmulationCapabilities = mkOption {
       type = types.bool;
       default = true;
+      description = "clear emulation capabilites";
     };
   };
 
