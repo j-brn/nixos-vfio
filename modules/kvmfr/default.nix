@@ -81,6 +81,12 @@ let
         toString index
       }", OWNER="${deviceConfig.permissions.user}", GROUP="${deviceConfig.permissions.group}", MODE="${deviceConfig.permissions.mode}", TAG+="systemd"
     '') cfg.devices));
+
+  apparmorAbstraction = (concatStringsSep "\n"
+    (imap (index: _deviceConfig: "/dev/kvmfr${toString index} rw,")
+      cfg.devices));
+
+  libvirtDeviceACL = (imap (index: _deviceConfig: "/dev/kvmfr${toString index}"));
 in {
   options.virtualisation.kvmfr = {
     enable = mkOption {
@@ -102,5 +108,14 @@ in {
 
     boot.kernelParams = optionals (cfg.devices != [ ]) [ kvmfrKernelParameter ];
     services.udev.packages = optionals (cfg.devices != [ ]) [ udevPackage ];
+
+    # create apparmor abstractions to allow libvirtd to use the kvmfr devices
+    environment.etc."apparmor.d/local/abstractions/libvirt-qemu" =
+      mkIf config.security.apparmor.enable {
+        text = pkgs.lib.mkAfter apparmorAbstraction;
+      };
+
+    # add kvmfr devices to deviceACL so libvirtd can use them
+    virtualisation.libvirtd.deviceACL = libvirtDeviceACL;
   };
 }
