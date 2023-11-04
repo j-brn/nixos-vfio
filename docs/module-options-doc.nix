@@ -12,7 +12,7 @@ let
     concatStringsSep "\n" (mapAttrsToList (name: doc: ''
       cat ${doc.optionsCommonMark} \
        | sed -r 's/\[\/nix\/store\/.+\-source\/(.+\.nix)\]/[\1]/g' \
-       | sed -r 's/file\:\/\/\/nix\/store\/.+\-source\/(.+\.nix)/https\:\/\/github\.com\/j-brn\/nixos\-vfio\/tree\/master\/\1/g' \
+       | sed -r 's/file\:\/\/ \/nix\/store\/.+\-source\/(.+\.nix)/https\:\/\/github\.com\/j-brn\/nixos\-vfio\/tree\/master\/\1/g' \
        >> $out/${name}.md
     '') optionsDocs);
 

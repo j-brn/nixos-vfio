@@ -1,4 +1,4 @@
-{ pkgs, module, ... }:
+{ pkgs, imports, ... }:
 let
   name = "virtualisation";
 in pkgs.nixosTest ({
@@ -6,7 +6,10 @@ in pkgs.nixosTest ({
 
   nodes = {
     machine = { config, pkgs, ... }: {
-      imports = [ module ];
+      inherit imports;
+
+           users.users.qemu-libvirtd.group = "qemu-libvirtd";
+           users.groups.qemu-libvirtd = {};
 
       virtualisation.hugepages = {
         enable = true;
