@@ -1,4 +1,4 @@
-{ pkgs, module, ... }:
+{ pkgs, imports, ... }:
 let
   name = "kvmfr";
   kvmfrConfig = {
@@ -31,12 +31,15 @@ in pkgs.nixosTest ({
 
   nodes = {
     machine = { config, pkgs, ... }: {
-      imports = [ module ];
+      inherit imports;
 
       users.users.tester = {
         isNormalUser = true;
         home = "/home/tester";
       };
+
+     users.users.qemu-libvirtd.group = "qemu-libvirtd";
+     users.groups.qemu-libvirtd = {};
 
       virtualisation.kvmfr = kvmfrConfig;
       virtualisation.graphics = false;
@@ -60,6 +63,7 @@ in pkgs.nixosTest ({
         name = dev.split('/')[-1]
         machine.wait_until_succeeds(f"systemctl status dev-{name}.device; test $? -ne 4")
 
+        # check that device was created and has the correct permissions
         exitcode, stdout = machine.execute(f"stat -c '{prop}' '{dev}'")
         stdout = stdout.strip()
         assert exitcode == 0, f"Checking property '{prop}' of '{dev}' failed. Exitcode {exitcode}"

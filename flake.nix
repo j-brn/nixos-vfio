@@ -10,11 +10,13 @@
       systems = [ "x86_64-linux" ];
 
       flake = {
-        nixosModules = {
-          kvmfr = import ./modules/kvmfr { std = inputs.nix-std.lib; };
-          libvirtd = import ./modules/libvirtd;
-          virtualisation = import ./modules/virtualisation;
-          vfio = import ./modules/vfio;
+        nixosModules.vfio = {
+          imports = [
+            (import ./modules/kvmfr { std = inputs.nix-std.lib; })
+            ./modules/libvirtd
+            ./modules/vfio
+            ./modules/virtualisation
+          ];
         };
       };
 
@@ -22,15 +24,15 @@
         checks = {
           kvmfr = import ./tests/kvmfr {
             inherit pkgs;
-            module = self.nixosModules.kvmfr;
+            imports = [ self.nixosModules.vfio ];
           };
           libvirtd = import ./tests/libvirtd {
             inherit pkgs;
-            imports = lib.attrValues self.nixosModules;
+            imports = [ self.nixosModules.vfio ];
           };
           virtualisation = import ./tests/virtualisation {
             inherit pkgs;
-            module = self.nixosModules.virtualisation;
+            imports = [ self.nixosModules.vfio ];
           };
         };
 

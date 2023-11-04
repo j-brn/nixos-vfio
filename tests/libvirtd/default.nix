@@ -7,6 +7,9 @@ in pkgs.nixosTest ({
     machine = { config, ... }: {
       inherit imports;
 
+           users.users.qemu-libvirtd.group = "qemu-libvirtd";
+           users.groups.qemu-libvirtd = {};
+
       virtualisation.libvirtd = {
         enable = true;
 
