@@ -86,7 +86,7 @@ let
     (imap (index: _deviceConfig: "/dev/kvmfr${toString index} rw,")
       cfg.devices));
 
-  libvirtDeviceACL = (imap (index: _deviceConfig: "/dev/kvmfr${toString index}"));
+  libvirtDeviceACL = (imap (index: _deviceConfig: "/dev/kvmfr${toString index}") cfg.devices);
 in {
   options.virtualisation.kvmfr = {
     enable = mkOption {
