@@ -10,13 +10,17 @@
       systems = [ "x86_64-linux" ];
 
       flake = {
-        nixosModules.vfio = {
-          imports = [
-            (import ./modules/kvmfr { std = inputs.nix-std.lib; })
-            ./modules/libvirtd
-            ./modules/vfio
-            ./modules/virtualisation
-          ];
+        nixosModules = {
+          vfio = {
+            imports = [
+              (import ./modules/kvmfr { std = inputs.nix-std.lib; })
+              ./modules/libvirtd
+              ./modules/vfio
+              ./modules/virtualisation
+            ];
+          };
+
+          default = self.nixosModules.vfio;
         };
       };
 
