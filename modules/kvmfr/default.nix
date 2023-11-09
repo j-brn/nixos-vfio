@@ -33,15 +33,17 @@ let
         description = mdDoc
           "Maximum horizontal video size that should be supported by this device.";
       };
+
       height = mkOption {
         type = types.number;
         description = mdDoc
           "Maximum vertical video size that should be supported by this device.";
       };
-      hdr = mkOption {
-        type = types.bool;
-        default = false;
-        description = mdDoc "Whether HDR should be supported.";
+
+      pixelFormat = mkOption {
+        type = types.enum [ "rgba32" "rgb24" ];
+        description = mdDoc "Pixel format to use.";
+        default = "rgba32";
       };
     };
   };
@@ -65,8 +67,8 @@ let
     let
       ceilToPowerOf2 = n:
         std.num.pow 2 (std.num.bits.bitSize - std.num.bits.countLeadingZeros n);
-      bytes = dimensions.width * dimensions.height
-        * (if dimensions.hdr then 2 else 1) * 4 * 2;
+      pixelSize = if dimensions.pixelFormat == "rgb24" then 3 else 4;
+      bytes = dimensions.width * dimensions.height * pixelSize * 2;
     in ceilToPowerOf2 (bytes / 1024 / 1024 + 10);
 
   kvmfrKernelParameter = let
@@ -86,7 +88,8 @@ let
     (imap (index: _deviceConfig: "/dev/kvmfr${toString index} rw,")
       cfg.devices));
 
-  libvirtDeviceACL = (imap (index: _deviceConfig: "/dev/kvmfr${toString index}") cfg.devices);
+  libvirtDeviceACL =
+    (imap (index: _deviceConfig: "/dev/kvmfr${toString index}") cfg.devices);
 in {
   options.virtualisation.kvmfr = {
     enable = mkOption {

@@ -16,12 +16,19 @@ let
         dimensions = {
           width = 3840;
           height = 2160;
-          hdr = true;
+          pixelFormat = "rgba32";
         };
 
         permissions = {
           user = "tester";
           mode = "0777";
+        };
+      }
+      {
+        dimensions = {
+          width = 3840;
+          height = 2160;
+          pixelFormat = "rgb24";
         };
       }
     ];
@@ -48,7 +55,7 @@ in pkgs.nixosTest ({
 
   testScript = ''
     # check kernel parameters
-    machine.succeed('grep -q "kvmfr.static_size_mb=32,256" /proc/cmdline')
+    machine.succeed('grep -q "kvmfr.static_size_mb=32,128,64" /proc/cmdline')
     machine.wait_for_unit("systemd-udevd.service")
 
     # check properties of kvmfr device nodes
@@ -59,6 +66,9 @@ in pkgs.nixosTest ({
         ("/dev/kvmfr1", "%U", "tester"),
         ("/dev/kvmfr1", "%G", "root"),
         ("/dev/kvmfr1", "%a", "777"),
+        ("/dev/kvmfr2", "%U", "root"),
+        ("/dev/kvmfr2", "%G", "root"),
+        ("/dev/kvmfr2", "%a", "600"),
     ]:
         name = dev.split('/')[-1]
         machine.wait_until_succeeds(f"systemctl status dev-{name}.device; test $? -ne 4")
