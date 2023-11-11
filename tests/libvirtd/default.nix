@@ -20,16 +20,17 @@ in pkgs.nixosTest ({
         ];
 
         scopedHooks.qemu = {
-          printSomethingBeforeWin10Starts = {
+          testHook = {
             enable = true;
 
             scope = {
               objects = [ "win10" ];
               operations = [ "prepare" ];
+              subOperations = [ "start" ];
             };
 
             script = ''
-              echo "win10 vm is starting"
+              echo "executed"
             '';
           };
         };
@@ -39,7 +40,10 @@ in pkgs.nixosTest ({
 
   testScript = ''
     machine.wait_for_unit("libvirtd.service")
-    machine.succeed("[ -f '/var/lib/libvirt/hooks/qemu.d/printSomethingBeforeWin10Starts' ]")
+    machine.succeed("[ -f '/var/lib/libvirt/hooks/qemu.d/testHook' ]")
+    machine.execute("cat /var/lib/libvirt/hooks/qemu.d/testHook")
+    machine.succeed("[[ 'executed' == $(/var/lib/libvirt/hooks/qemu.d/testHook 'win10' 'prepare' 'start') ]]")
+    machine.succeed("[[ 'executed' != $(/var/lib/libvirt/hooks/qemu.d/testHook 'anotherDomain' 'prepare' 'start') ]]")
 
     machine.succeed("id -nG 'qemu-libvirtd' | grep -qw 'kvm'")
     machine.succeed("id -nG 'qemu-libvirtd' | grep -qw 'input'")
