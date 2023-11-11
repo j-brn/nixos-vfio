@@ -1,14 +1,14 @@
-{ pkgs, lib, module-options-doc, ... }:
+{ pkgs, lib, moduleDoc, ... }:
 let inherit (pkgs) stdenv mdbook;
 in stdenv.mkDerivation {
   name = "nixos-vfio-docs";
   src = ./book;
 
-  buildInputs = [ module-options-doc ];
+  buildInputs = [ moduleDoc ];
   nativeBuildInputs = [ mdbook ];
 
   buildPhase = ''
-    ln -s ${module-options-doc} ./src/options
+    ln -s ${moduleDoc}/options.md ./src
     mdbook build
   '';
 
