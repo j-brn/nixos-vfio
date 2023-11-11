@@ -3,4 +3,4 @@
 - [Introduction](introduction.md)
 - [Getting Started](getting-started.md)
 - [Guide](guide.md)
-- [Options](options/vfio.md)
+- [Options](options.md)

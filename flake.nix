@@ -24,7 +24,9 @@
         };
       };
 
-      perSystem = { system, pkgs, self', lib, ... }: {
+      perSystem = { system, pkgs, self', lib, ... }: let
+        mkModuleDoc = (pkgs.callPackage (import ./lib/mkModuleDoc.nix) {});
+      in {
         checks = {
           kvmfr = import ./tests/kvmfr {
             inherit pkgs;
@@ -40,12 +42,10 @@
           };
         };
 
-        packages = {
-          docs-options = pkgs.callPackage ./docs/module-options-doc.nix {
-            modules = (self.nixosModules);
-          };
-          docs-book = pkgs.callPackage ./docs/docbook.nix {
-            module-options-doc = self'.packages.docs-options;
+        packages = rec {
+          options-doc = mkModuleDoc "vfio" self.nixosModules.vfio;
+          docbook = pkgs.callPackage ./docs/docbook.nix {
+            moduleDoc = options-doc;
           };
         };
 
