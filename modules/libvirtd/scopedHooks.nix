@@ -75,17 +75,24 @@ let
       };
 
       config = {
-        source = mkIf (config.script != null) (pkgs.writeShellScript
-          "libvirtd-hook-source-${name}" config.script);
+        source = mkIf (config.script != null)
+          (pkgs.writeShellScript "libvirtd-hook-source-${name}" config.script);
       };
     }));
 
   mkHook = name: hook:
     let
       conditions = map (condition: "[[ ${condition} ]]") ([ ]
-        ++ optionals (hook.scope.objects != null) [ ("$1 == @(" + (concatStringsSep "|" hook.scope.objects) + ")") ]
-        ++ optionals (hook.scope.operations != null) [ ("$2 == @(" + (concatStringsSep "|" hook.scope.operations) + ")") ]
-        ++ optionals (hook.scope.subOperations != null) [ ("$3 == @(" + (concatStringsSep "|" hook.scope.subOperations) + ")")]);
+        ++ optionals (hook.scope.objects != null) [
+          ("$1 == @(" + (concatStringsSep "|"
+            (map (object: "'${object}'") hook.scope.objects)) + ")")
+        ] ++ optionals (hook.scope.operations != null) [
+          ("$2 == @(" + (concatStringsSep "|"
+            (map (object: "'${object}'") hook.scope.operations)) + ")")
+        ] ++ optionals (hook.scope.subOperations != null) [
+          ("$3 == @(" + (concatStringsSep "|"
+            (map (object: "'${object}'") hook.scope.subOperations)) + ")")
+        ]);
     in if (conditions != [ ]) then
       pkgs.writeShellScript "libvirtd-hook-${name}" ''
         if ${concatStringsSep " && " conditions}; then
@@ -131,5 +138,6 @@ in {
 
   ### Implementation
 
-  config.virtualisation.libvirtd.hooks = mapAttrs (driver: hooks: mapAttrs (mkHook) hooks) cfg;
+  config.virtualisation.libvirtd.hooks =
+    mapAttrs (driver: hooks: mapAttrs (mkHook) hooks) cfg;
 }
