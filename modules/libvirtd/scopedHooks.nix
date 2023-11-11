@@ -3,38 +3,6 @@ with lib;
 let
   cfg = config.virtualisation.libvirtd.scopedHooks;
 
-  mkHook = name: hook:
-    let
-      innerHook = pkgs.writeShellScript "hook" hook.script;
-      wrapper = let
-        objectsCondition = if (hook.scope.objects != null) then
-          "$1 == @(" + (concatStringsSep "|" hook.scope.objects) + ")"
-        else
-          "true";
-
-        operationsCondition = if (hook.scope.operations != null) then
-          "$1 == @(" + (concatStringsSep "|" hook.scope.operations) + ")"
-        else
-          "true";
-
-        subOperationsCondition = if (hook.scope.subOperations != null) then
-          "$1 == @(" + (concatStringsSep "|" hook.scope.subOperations) + ")"
-        else
-          "true";
-      in ''
-        if true && [[ ${objectsCondition} ]] && [[ ${operationsCondition} ]] && [[ ${subOperationsCondition} ]]; then
-          ${innerHook} "$@" < /dev/stdin
-        fi
-      '';
-    in pkgs.writeShellScript name wrapper;
-
-  mkHookStaticFileEntries = driver: hookConfigs:
-    let
-      hooks = mapAttrs (mkHook) hookConfigs;
-      destination = "${hookDir}/${driver}.d/";
-    in mapAttrs' (name: hook: nameValuePair "${destination}/${name}" hook)
-    hooks;
-
   hookscopeSubmodule = with types;
     submodule {
       options = {
@@ -66,7 +34,7 @@ let
 
   mkHooksSubmoduleType = with types;
     driver:
-    types.attrsOf (submodule {
+    types.attrsOf (submodule ({ name, config, options, ... }: {
       options = {
         enable = mkOption {
           type = bool;
@@ -85,10 +53,16 @@ let
         };
 
         script = mkOption {
-          type = str;
-          default = "";
+          type = nullOr str;
           description = lib.mdDoc ''
             Hook to execute
+          '';
+        };
+
+        source = mkOption {
+          type = path;
+          description = mdDoc ''
+            Path to the source file of the hook.
           '';
         };
 
@@ -99,7 +73,27 @@ let
           visible = true;
         };
       };
-    });
+
+      config = {
+        source = mkIf (config.script != null) (pkgs.writeShellScript
+          "libvirtd-hook-source-${name}" config.script);
+      };
+    }));
+
+  mkHook = name: hook:
+    let
+      conditions = map (condition: "[[ ${condition} ]]") ([ ]
+        ++ optionals (hook.scope.objects != null) [ ("$1 == @(" + (concatStringsSep "|" hook.scope.objects) + ")") ]
+        ++ optionals (hook.scope.operations != null) [ ("$2 == @(" + (concatStringsSep "|" hook.scope.operations) + ")") ]
+        ++ optionals (hook.scope.subOperations != null) [ ("$3 == @(" + (concatStringsSep "|" hook.scope.subOperations) + ")")]);
+    in if (conditions != [ ]) then
+      pkgs.writeShellScript "libvirtd-hook-${name}" ''
+        if ${concatStringsSep " && " conditions}; then
+          ${hook.source} "$@" < /dev/stdin
+        fi
+      ''
+    else
+      hook.source;
 in {
   ###### interface
 
@@ -134,6 +128,8 @@ in {
       default = { };
     };
   };
+
+  ### Implementation
 
   config.virtualisation.libvirtd.hooks = mapAttrs (driver: hooks: mapAttrs (mkHook) hooks) cfg;
 }
