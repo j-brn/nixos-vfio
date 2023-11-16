@@ -5,7 +5,7 @@ let
     enable = true;
     devices = [
       {
-        dimensions = {
+        resolution = {
           width = 1920;
           height = 1080;
         };
@@ -13,7 +13,7 @@ let
         permissions = { user = "tester"; };
       }
       {
-        dimensions = {
+        resolution = {
           width = 3840;
           height = 2160;
           pixelFormat = "rgba32";
@@ -25,10 +25,17 @@ let
         };
       }
       {
-        dimensions = {
+        resolution = {
           width = 3840;
           height = 2160;
           pixelFormat = "rgb24";
+        };
+      }
+      {
+        size = 32;
+
+        permissions = {
+          user = "tester";
         };
       }
     ];
@@ -54,8 +61,10 @@ in pkgs.nixosTest ({
   };
 
   testScript = ''
-    # check kernel parameters
-    machine.succeed('grep -q "kvmfr.static_size_mb=32,128,64" /proc/cmdline')
+    machine.succeed("grep -q 'kvmfr' /etc/modules-load.d/kvmfr.conf")
+    machine.succeed("grep -q 'options kvmfr static_size_mb=32,128,64,32' /etc/modprobe.d/kvmfr.conf")
+
+    machine.wait_for_unit("systemd-modules-load.service")
     machine.wait_for_unit("systemd-udevd.service")
 
     # check properties of kvmfr device nodes
@@ -69,6 +78,7 @@ in pkgs.nixosTest ({
         ("/dev/kvmfr2", "%U", "root"),
         ("/dev/kvmfr2", "%G", "root"),
         ("/dev/kvmfr2", "%a", "600"),
+        ("/dev/kvmfr3", "%U", "tester"),
     ]:
         name = dev.split('/')[-1]
         machine.wait_until_succeeds(f"systemctl status dev-{name}.device; test $? -ne 4")
