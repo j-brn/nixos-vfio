@@ -12,7 +12,7 @@ let
 in {
   imports = [
     ./scopedHooks.nix
-    ./qemuGuests.nix
+    ./domain.nix
   ];
 
   options.virtualisation.libvirtd = {

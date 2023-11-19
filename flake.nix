@@ -36,6 +36,10 @@
             inherit pkgs;
             imports = [ self.nixosModules.vfio ];
           };
+          libvirtd-domain = import ./tests/libvirtd/domain.nix {
+            inherit pkgs;
+            imports = [ self.nixosModules.vfio ];
+          };
           virtualisation = import ./tests/virtualisation {
             inherit pkgs;
             imports = [ self.nixosModules.vfio ];
