@@ -13,6 +13,7 @@ in {
   imports = [
     ./scopedHooks.nix
     ./domain.nix
+    ./network.nix
   ];
 
   options.virtualisation.libvirtd = {

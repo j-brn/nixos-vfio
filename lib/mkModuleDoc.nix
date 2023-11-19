@@ -7,7 +7,7 @@ name: module:
 let
   options = (evalModules { modules = [ { config._module.check = false; } module ]; }).options;
   filteredOptions = (filterAttrs (key: _: key != "_module") options);
-  docs = (nixosOptionsDoc { options = filteredOptions; });
+  docs = (nixosOptionsDoc { options = filteredOptions; warningsAreErrors = false; });
 in pkgs.runCommand "options.md" { } ''
   mkdir $out
   cat ${docs.optionsCommonMark} \

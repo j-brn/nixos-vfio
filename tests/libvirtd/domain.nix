@@ -13,7 +13,7 @@ pkgs.nixosTest ({
       virtualisation.libvirtd = {
         enable = true;
 
-        domains.qemu = {
+        qemu.domains = {
           declarative = true;
 
           domains = {
@@ -79,7 +79,10 @@ pkgs.nixosTest ({
 
                 networkInterfaces = [{ sourceNetwork = "default"; }];
 
-                cdroms = [{ sourceFile = "/opt/someIso.iso"; bootIndex = 1; }];
+                cdroms = [{
+                  sourceFile = "/opt/someIso.iso";
+                  bootIndex = 1;
+                }];
 
                 kvmfr = {
                   device = "/dev/kvmfr0";
@@ -95,6 +98,6 @@ pkgs.nixosTest ({
 
   testScript = ''
     machine.wait_for_unit("libvirtd.service")
-    machine.wait_until_succeeds("[ -f '/var/lib/libvirt/qemu/win10.xml' ]")
+    machine.wait_until_succeeds("[ -f '/var/lib/libvirt/qemu/win10.xml' ]", 10)
   '';
 })

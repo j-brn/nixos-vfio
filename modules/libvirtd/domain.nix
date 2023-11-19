@@ -3,7 +3,7 @@
 with lib;
 
 let
-  cfg = config.virtualisation.libvirtd.domains.qemu;
+  cfg = config.virtualisation.libvirtd.qemu.domains;
 
   memoryOptionsType = let
     memoryType = types.submodule {
@@ -832,8 +832,8 @@ let
     pkgs.runCommand "libvirt-domain-${name}.xml" { } ''
       mkdir $out
 
-      echo '${mkDomainXml name definition}' > $domain.xml
-      ${pkgs.libxml2}/bin/xmllint --format $domain.xml > $out/domain.xml
+      echo '${mkDomainXml name definition}' > domain.xml
+      ${pkgs.libxml2}/bin/xmllint --format domain.xml > $out/domain.xml
       cat $out/domain.xml
       ${pkgs.libvirt}/bin/virt-xml-validate $out/domain.xml
     '';
@@ -858,13 +858,13 @@ let
     ${pkgs.libvirt}/bin/virsh list --name | xargs --no-run-if-empty ${pkgs.libvirt}/bin/virsh undefine
   '';
 in {
-  options.virtualisation.libvirtd.domains.qemu = {
+  options.virtualisation.libvirtd.qemu.domains = {
     declarative = mkOption {
       type = types.bool;
       default = false;
       description = mdDoc ''
         Whether to enable declarative qemu domains. WARNING: If this option is enabled, the module asumes beeing
-        the only source of truth and will purge any domain no created by this module.
+        the only source of truth and will purge any domain not created by this module.
       '';
     };
 
