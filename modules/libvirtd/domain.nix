@@ -116,14 +116,14 @@ let
     vcpupinType = types.submodule {
       options = {
         vcpu = mkOption {
-          type = types.ints.positive;
+          type = types.number;
           description = mdDoc ''
             vcpu to pin
           '';
         };
 
         cpuset = mkOption {
-          type = types.listOf types.ints.positive;
+          type = types.listOf types.number;
           description = mdDoc ''
             Comma separated list of cpus this vcpu can be pinned to.
           '';
@@ -134,14 +134,14 @@ let
     iothreadpinType = types.submodule {
       options = {
         iothread = mkOption {
-          type = types.ints.positive;
+          type = types.number;
           description = mdDoc ''
             iothread to pin
           '';
         };
 
         cpuset = mkOption {
-          type = types.listOf types.ints.positive;
+          type = types.listOf types.number;
           description = mdDoc ''
             Comma separated list of cpus this iothread can be pinned to.
           '';
@@ -152,7 +152,7 @@ let
     emulatorpinType = types.submodule {
       options = {
         cpuset = mkOption {
-          type = types.listOf types.ints.positive;
+          type = types.listOf types.number;
           description = mdDoc ''
             Comma separated list of cpus the emulator can be pinned to.
           '';
@@ -332,7 +332,7 @@ let
         };
 
         function = mkOption {
-          type = types.ints.positive;
+          type = types.number;
           apply = value: toString value;
           description = mdDoc ''
             a value between 0 and 7, inclusive
