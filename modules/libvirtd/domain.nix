@@ -447,7 +447,7 @@ let
     };
   };
 
-  domainDefinitionType = types.submodule {
+  domainType = types.submodule {
     options = {
       memory = mkOption {
         type = memoryOptionsType;
@@ -540,17 +540,6 @@ let
           extra XML appended to the generated domain
         '';
       };
-    };
-  };
-
-  domainType = types.submodule {
-    options = {
-      definition = mkOption {
-        type = domainDefinitionType;
-        description = mdDoc ''
-          Definition of the domain
-        '';
-      };
 
       autostart = mkOption {
         type = types.bool;
@@ -560,7 +549,6 @@ let
         '';
       };
     };
-
   };
 
   mkDomainXml = let
@@ -828,19 +816,18 @@ let
     </domain>
   '';
 
-  mkDomainXmlPackage = name: definition:
+  mkDomainXmlPackage = name: domain:
     pkgs.runCommand "libvirt-domain-${name}.xml" { } ''
       mkdir $out
 
-      echo '${mkDomainXml name definition}' > domain.xml
+      echo '${mkDomainXml name domain}' > domain.xml
       ${pkgs.libxml2}/bin/xmllint --format domain.xml > $out/domain.xml
       cat $out/domain.xml
       ${pkgs.libvirt}/bin/virt-xml-validate $out/domain.xml
     '';
 
   defineDomainsScript = let
-    xmlPackages = mapAttrsToList mkDomainXmlPackage
-      (mapAttrs (_: domain: domain.definition) cfg.domains);
+    xmlPackages = mapAttrsToList mkDomainXmlPackage cfg.domains;
     commands = map (xmlPackage: ''
       ${pkgs.libvirt}/bin/virsh define ${xmlPackage}/domain.xml;
     '') xmlPackages;

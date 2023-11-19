@@ -18,76 +18,74 @@ pkgs.nixosTest ({
 
           domains = {
             win10 = {
-              definition = {
+              memory = {
                 memory = {
-                  memory = {
-                    value = 1;
-                    unit = "G";
-                  };
-
-                  disableBallooning = true;
-                  useHugepages = false;
+                  value = 1;
+                  unit = "G";
                 };
 
-                os.enableBootmenu = true;
+                disableBallooning = true;
+                useHugepages = false;
+              };
 
-                vcpu = {
-                  count = 2;
-                  placement = "static";
+              os.enableBootmenu = true;
+
+              vcpu = {
+                count = 2;
+                placement = "static";
+              };
+
+              cputune = {
+                vcpupins = [
+                  {
+                    vcpu = 1;
+                    cpuset = [ 1 ];
+                  }
+                  {
+                    vcpu = 2;
+                    cpuset = [ 2 ];
+                  }
+                ];
+              };
+
+              cpu = {
+                topology = {
+                  sockets = 1;
+                  dies = 1;
+                  cores = 2;
+                  threads = 1;
                 };
+              };
 
-                cputune = {
-                  vcpupins = [
-                    {
-                      vcpu = 1;
-                      cpuset = [ 1 ];
-                    }
-                    {
-                      vcpu = 2;
-                      cpuset = [ 2 ];
-                    }
-                  ];
+              input = {
+                virtioMouse = true;
+                virtioKeyboard = true;
+              };
+
+              spice = {
+                spiceAudio = true;
+                spicemvcChannel = true;
+                spiceGraphics = true;
+              };
+
+              pciHostDevices = [{
+                sourceAddress = {
+                  bus = "0x04";
+                  slot = "0x00";
+                  function = 1;
                 };
+              }];
 
-                cpu = {
-                  topology = {
-                    sockets = 1;
-                    dies = 1;
-                    cores = 2;
-                    threads = 1;
-                  };
-                };
+              networkInterfaces = [{ sourceNetwork = "default"; }];
 
-                input = {
-                  virtioMouse = true;
-                  virtioKeyboard = true;
-                };
+              cdroms = [{
+                sourceFile = "/opt/someIso.iso";
+                bootIndex = 1;
+              }];
 
-                spice = {
-                  spiceAudio = true;
-                  spicemvcChannel = true;
-                  spiceGraphics = true;
-                };
-
-                pciHostDevices = [{
-                  sourceAddress = {
-                    bus = "0x04";
-                    slot = "0x00";
-                    function = 1;
-                  };
-                }];
-
-                networkInterfaces = [{ sourceNetwork = "default"; }];
-
-                cdroms = [{
-                  sourceFile = "/opt/someIso.iso";
-                  bootIndex = 1;
-                }];
-
-                kvmfr = {
-                  device = "/dev/kvmfr0";
-                  size = "33554432";
-                };
+              kvmfr = {
+                device = "/dev/kvmfr0";
+                size = "33554432";
               };
             };
           };
