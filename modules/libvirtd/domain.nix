@@ -827,23 +827,19 @@ let
     '';
 
   defineDomainsScript = let
-    xmlPackages = mapAttrsToList mkDomainXmlPackage cfg.domains;
-    commands = map (xmlPackage: ''
-      ${pkgs.libvirt}/bin/virsh define ${xmlPackage}/domain.xml;
+    xmlPackages = mapAttrs mkDomainXmlPackage cfg.domains;
+    commands = mapAttrsToList (name: xmlPackage: ''
+      ln -s ${xmlPackage}/domain.xml /var/lib/libvirt/qemu/${name}.xml
     '') xmlPackages;
   in concatStringsSep "\n" commands;
 
   autostartDomainsScript = let
     domainsToAutostart = mapAttrsToList (name: _: name)
       (filterAttrs (_: domain: domain.autostart) cfg.domains);
-    commands = map (domainName: ''
-      ${pkgs.libvirt}/bin/virsh autostart ${name}
+    commands = map (name: ''
+      ln -s /var/lib/libvirt/qemu/${name}.xml /var/lib/libvirt/qemu/autostart/${name}.xml
     '') domainsToAutostart;
-  in concatStringsSep "\n" commands;
-
-  purgeDomainsScript = ''
-    ${pkgs.libvirt}/bin/virsh list --name | xargs --no-run-if-empty ${pkgs.libvirt}/bin/virsh undefine
-  '';
+    in concatStringsSep "\n" commands;
 in {
   options.virtualisation.libvirtd.qemu.domains = {
     declarative = mkOption {
@@ -865,30 +861,15 @@ in {
   };
 
   config = mkIf cfg.declarative {
-    systemd.services = {
-      libvirtd-purge-domains = {
-        description = "purge existing libvirtd domains";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = purgeDomainsScript;
-      };
+    systemd.services.libvirtd.preStart = lib.mkAfter ''
+      mkdir -p /var/lib/libvirt/qemu
+      mkdir -p /var/lib/libvirt/qemu/autostart
 
-      libvirtd-define-declarative-domains = {
-        description = "define declarative libvirtd domains";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd-purge-domains.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = defineDomainsScript;
-      };
+      rm -f /var/lib/libvirt/qemu/*.xml
+      rm -f /var/lib/libvirt/qemu/autostart/*.xml
 
-      libvirtd-autostart-declarative-domains = {
-        description = "configure autostart for declarative libvirtd domains";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd-define-declarative-domains.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = autostartDomainsScript;
-      };
-    };
+      ${defineDomainsScript}
+      ${autostartDomainsScript}
+    '';
   };
 }

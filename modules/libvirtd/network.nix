@@ -202,23 +202,19 @@ let
     '';
 
   defineNetworksScript = let
-    xmlPackages = mapAttrsToList mkNetworkXmlPackage cfg.networks;
-    commands = map (xmlPackage: ''
-      ${pkgs.libvirt}/bin/virsh net-define ${xmlPackage}/network.xml;
+    xmlPackages = mapAttrs mkNetworkXmlPackage cfg.networks;
+    commands = mapAttrsToList (name: xmlPackage: ''
+      ln -s ${xmlPackage}/network.xml /var/lib/libvirt/qemu/networks/${name}.xml
     '') xmlPackages;
   in concatStringsSep "\n" commands;
 
   autostartNetworksScript = let
     domainsToAutostart = mapAttrsToList (name: _: name)
       (filterAttrs (_: network: network.autostart) cfg.networks);
-    commands = map (networkName: ''
-      ${pkgs.libvirt}/bin/virsh net-autostart ${networkName}
+    commands = map (name: ''
+      ln -s /var/lib/libvirt/qemu/networks/${name}.xml /var/lib/libvirt/qemu/networks/autostart/${name}.xml
     '') domainsToAutostart;
   in concatStringsSep "\n" commands;
-
-  purgeNetworksScript = ''
-    ${pkgs.libvirt}/bin/virsh net-list --name | xargs --no-run-if-empty ${pkgs.libvirt}/bin/virsh net-undefine
-  '';
 in {
   options.virtualisation.libvirtd.qemu.networks = {
     declarative = mkOption {
@@ -240,30 +236,15 @@ in {
   };
 
   config = mkIf cfg.declarative {
-    systemd.services = {
-      libvirtd-purge-networks = {
-        description = "purge existing libvirtd networks";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = purgeNetworksScript;
-      };
+    systemd.services.libvirtd.preStart = lib.mkAfter ''
+      mkdir -p /var/lib/libvirt/qemu/networks
+      mkdir -p /var/lib/libvirt/qemu/networks/autostart
 
-      libvirtd-define-declarative-networks = {
-        description = "define declarative libvirtd networks";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd-purge-networks.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = defineNetworksScript;
-      };
+      rm -f /var/lib/libvirt/qemu/networks/*.xml
+      rm -f /var/lib/libvirt/qemu/networks/autostart/*.xml
 
-      libvirtd-autostart-declarative-networks = {
-        description = "configure autostart for declarative libvirtd networks";
-        serviceConfig = { Type = "oneshot"; };
-        after = [ "libvirtd-define-declarative-networks.service" ];
-        wantedBy = [ "multi-user.target" ];
-        script = autostartNetworksScript;
-      };
-    };
+      ${defineNetworksScript}
+      ${autostartNetworksScript}
+    '';
   };
 }
