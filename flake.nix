@@ -26,20 +26,15 @@
 
       perSystem = { system, pkgs, self', lib, ... }: let
         mkModuleDoc = (pkgs.callPackage (import ./lib/mkModuleDoc.nix) {});
+        testParams = { inherit pkgs; imports = [ self.nixosModules.vfio ]; };
       in {
         checks = {
-          kvmfr = import ./tests/kvmfr {
-            inherit pkgs;
-            imports = [ self.nixosModules.vfio ];
-          };
-          libvirtd = import ./tests/libvirtd {
-            inherit pkgs;
-            imports = [ self.nixosModules.vfio ];
-          };
-          virtualisation = import ./tests/virtualisation {
-            inherit pkgs;
-            imports = [ self.nixosModules.vfio ];
-          };
+          kvmfr = import ./tests/kvmfr testParams;
+          libvirtd = import ./tests/libvirtd testParams;
+          libvirtd-domain = import ./tests/libvirtd/domain.nix testParams;
+          libvirtd-network = import ./tests/libvirtd/network.nix testParams;
+          virtualisation = import ./tests/virtualisation testParams;
+          docs = self'.packages.docbook;
         };
 
         packages = rec {
