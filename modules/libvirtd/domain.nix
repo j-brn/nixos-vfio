@@ -447,109 +447,125 @@ let
     };
   };
 
-  domainType = types.submodule {
-    options = {
-      memory = mkOption {
-        type = memoryOptionsType;
-        description = ''
-          Memory configuration. See https://libvirt.org/formatdomain.html#memory-allocation for details.
-        '';
+  domainType = with types;
+    (submodule ({ name, config, options, ... }: {
+      options = {
+        config = mkOption {
+          type = nullOr (submodule {
+            options = {
+              memory = mkOption {
+                type = memoryOptionsType;
+                description = ''
+                  Memory configuration. See https://libvirt.org/formatdomain.html#memory-allocation for details.
+                '';
+              };
+
+              os = mkOption {
+                type = osOptionsType;
+                default = { };
+                description = ''
+                  OS configuration. See https://libvirt.org/formatdomain.html#operating-system-booting for details.
+                '';
+              };
+
+              vcpu = mkOption {
+                type = vcpuOptionsType;
+                description = mdDoc ''
+                  vCPU allocation. See https://libvirt.org/formatdomain.html#cpu-allocation for details
+                '';
+              };
+
+              cputune = mkOption {
+                type = types.nullOr cputuneOptionsType;
+                default = { };
+                description = mdDoc ''
+                  CPU tuning options. See https://libvirt.org/formatdomain.html#cpu-tuning for details
+                '';
+              };
+
+              cpu = mkOption {
+                type = cpuOptionsType;
+                default = { };
+                description = mdDoc ''
+                  CPU and topology settings. See https://libvirt.org/formatdomain.html#cpu-model-and-topology for details
+                '';
+              };
+
+              input = mkOption {
+                type = inputOptionsType;
+                default = { };
+                description = mdDoc ''
+                  Configure input devices
+                '';
+              };
+
+              spice = mkOption {
+                type = spiceOptionsType;
+                description = mdDoc ''
+                  Configure spice
+                '';
+              };
+
+              pciHostDevices = mkOption {
+                type = types.listOf pciHostdevType;
+                default = [ ];
+                description = mdDoc ''
+                  PCI host devices
+                '';
+              };
+
+              networkInterfaces = mkOption {
+                type = types.listOf networkInterfaceType;
+                default = [ ];
+                description = mdDoc ''
+                  Network interfaces
+                '';
+              };
+
+              cdroms = mkOption {
+                type = types.listOf cdromType;
+                default = [ ];
+                description = mdDoc ''
+                  CDROMs to attach to the domain
+                '';
+              };
+
+              kvmfr = mkOption {
+                type = types.nullOr kvmfrOptionsType;
+                description = mdDoc ''
+                  kvmfr settings
+                '';
+              };
+            };
+
+          });
+
+          default = null;
+          description = mdDoc ''
+            Nix definition of the domain. Overrides xml if set.
+          '';
+        };
+
+        xml = mkOption {
+          type = types.str;
+          description = mdDoc ''
+            Raw XML definition of the domain. Will be overridden by config if set.
+          '';
+        };
+
+        autostart = mkOption {
+          type = types.bool;
+          default = false;
+          description = mdDoc ''
+            Whether to start the domain on boot.
+          '';
+        };
       };
 
-      os = mkOption {
-        type = osOptionsType;
-        default = { };
-        description = ''
-          OS configuration. See https://libvirt.org/formatdomain.html#operating-system-booting for details.
-        '';
+      config = {
+        xml = mkIf (config.config != null) (mkDomainXml name config.config);
       };
-
-      vcpu = mkOption {
-        type = vcpuOptionsType;
-        description = mdDoc ''
-          vCPU allocation. See https://libvirt.org/formatdomain.html#cpu-allocation for details
-        '';
-      };
-
-      cputune = mkOption {
-        type = types.nullOr cputuneOptionsType;
-        default = { };
-        description = mdDoc ''
-          CPU tuning options. See https://libvirt.org/formatdomain.html#cpu-tuning for details
-        '';
-      };
-
-      cpu = mkOption {
-        type = cpuOptionsType;
-        default = { };
-        description = mdDoc ''
-          CPU and topology settings. See https://libvirt.org/formatdomain.html#cpu-model-and-topology for details
-        '';
-      };
-
-      input = mkOption {
-        type = inputOptionsType;
-        default = { };
-        description = mdDoc ''
-          Configure input devices
-        '';
-      };
-
-      spice = mkOption {
-        type = spiceOptionsType;
-        description = mdDoc ''
-          Configure spice
-        '';
-      };
-
-      pciHostDevices = mkOption {
-        type = types.listOf pciHostdevType;
-        default = [ ];
-        description = mdDoc ''
-          PCI host devices
-        '';
-      };
-
-      networkInterfaces = mkOption {
-        type = types.listOf networkInterfaceType;
-        default = [ ];
-        description = mdDoc ''
-          Network interfaces
-        '';
-      };
-
-      cdroms = mkOption {
-        type = types.listOf cdromType;
-        default = [ ];
-        description = mdDoc ''
-          CDROMs to attach to the domain
-        '';
-      };
-
-      kvmfr = mkOption {
-        type = types.nullOr kvmfrOptionsType;
-        description = mdDoc ''
-          kvmfr settings
-        '';
-      };
-
-      extraXml = mkOption {
-        type = types.str;
-        default = "";
-        description = mdDoc ''
-          extra XML appended to the generated domain
-        '';
-      };
-
-      autostart = mkOption {
-        type = types.bool;
-        default = false;
-        description = mdDoc ''
-          Whether to start the domain on boot.
-        '';
-      };
-    };
-  };
+    }));
 
   mkDomainXml = let
     mkMemoryXml = memory: ''
@@ -812,17 +828,14 @@ let
       </devices>
 
       ${optionalString (definition.kvmfr != null) mkKvmfrXml definition.kvmfr}
-      ${definition.extraXml}
     </domain>
   '';
 
-  mkDomainXmlPackage = name: domain:
+  mkDomainXmlPackage = name: config:
     pkgs.runCommand "libvirt-domain-${name}.xml" { } ''
       mkdir $out
-
-      echo '${mkDomainXml name domain}' > domain.xml
+      echo '${config.xml}' > domain.xml
       ${pkgs.libxml2}/bin/xmllint --format domain.xml > $out/domain.xml
-      cat $out/domain.xml
       ${pkgs.libvirt}/bin/virt-xml-validate $out/domain.xml
     '';
 
@@ -839,7 +852,7 @@ let
     commands = map (name: ''
       ln -s /var/lib/libvirt/qemu/${name}.xml /var/lib/libvirt/qemu/autostart/${name}.xml
     '') domainsToAutostart;
-    in concatStringsSep "\n" commands;
+  in concatStringsSep "\n" commands;
 in {
   options.virtualisation.libvirtd.qemu.domains = {
     declarative = mkOption {
