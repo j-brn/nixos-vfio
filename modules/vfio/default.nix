@@ -54,7 +54,7 @@ in {
       ]);
 
     boot.initrd.kernelModules =
-      [ "vfio_pci" "vfio_iommu_type1" "vfio" ] ++ lib.optionals lib.versionOlder pkgs.linux.version "6.2" [ "vfio_virqfd" ];
+      [ "vfio_pci" "vfio_iommu_type1" "vfio" ] ++ lib.optionals (lib.versionOlder pkgs.linux.version "6.2") [ "vfio_virqfd" ];
       
     boot.blacklistedKernelModules =
       optionals cfg.blacklistNvidia [ "nvidia" "nouveau" ];
