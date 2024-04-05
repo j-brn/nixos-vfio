@@ -530,6 +530,13 @@ let
                 '';
               };
 
+              devicesExtraXml = mkOption {
+                type = types.str;
+                description = mdDoc ''
+                  Extra raw XML that is added to <devices> section
+                '';
+              };
+
               kvmfr = mkOption {
                 type = types.nullOr kvmfrOptionsType;
                 description = mdDoc ''
@@ -825,6 +832,8 @@ let
             </channel>
           ''
         }
+
+        ${definition.devicesExtraXml}
       </devices>
 
       ${optionalString (definition.kvmfr != null) mkKvmfrXml definition.kvmfr}
