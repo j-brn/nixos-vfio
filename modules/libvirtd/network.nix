@@ -254,6 +254,7 @@ in {
   };
 
   config = mkIf cfg.declarative {
+    systemd.services.libvirtd-config.wantedBy = [ "multi-user.target" ];
     systemd.services.libvirtd-config.script = lib.mkAfter ''
       mkdir -p /var/lib/libvirt/qemu/networks
       mkdir -p /var/lib/libvirt/qemu/networks/autostart
