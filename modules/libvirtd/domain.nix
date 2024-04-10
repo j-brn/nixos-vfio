@@ -531,7 +531,8 @@ let
               };
 
               devicesExtraXml = mkOption {
-                type = types.str;
+                type = types.lines;
+                default = "";
                 description = mdDoc ''
                   Extra raw XML that is added to <devices> section
                 '';
